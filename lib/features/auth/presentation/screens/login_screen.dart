@@ -30,154 +30,159 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
 
-    // Listen to the authViewModelProvider inside the build method
     ref.listen<AuthState>(
       authViewModelProvider,
           (previous, next) {
-        debugPrint("LISTEN TRIGGERED. sentEmail: ${next.sentEmail}");
-        debugPrint("Previous state: ${previous?.sentEmail}, Next state: ${next.sentEmail}");
-
-        // Only navigate if sentEmail changes from false to true
         if (next.isSuccess && !(previous?.isSuccess ?? false)) {
-          if (mounted) { // Check if the widget is still mounted
+          if (mounted) {
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => const UserInfoScreen(),
               ),
             );
-            // Reset the sentEmail state in the ViewModel
             ref.read(authViewModelProvider.notifier).resetSentEmail();
           }
         }
-
       },
     );
-
 
     return Stack(
       children: [
         Scaffold(
           backgroundColor: Colors.black,
-          body: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 32),
-                const Text("Welcome Back!",
-                    style: TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                const Text(
-                  "Enter your credentials to securely access your\naccount and stay in control of your tokenized data",
-                  style: TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 32),
-
-                // Email Field
-                TextField(
-                  controller: emailController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: "Email",
-                    labelStyle: const TextStyle(color: Colors.white),
-                    hintText: "Enter your email",
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    filled: true,
-                    fillColor: Colors.grey[900],
-                    prefixIcon: const Icon(Icons.mail_outline, color: Colors.grey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Password Field
-                TextField(
-                  controller: passController,
-                  obscureText: _obscurePassword,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                    labelStyle: const TextStyle(color: Colors.white),
-                    hintText: "Enter your password",
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    filled: true,
-                    fillColor: Colors.grey[900],
-                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey,
+          body: Center(
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 32),
+                      const Text(
+                        "Welcome Back!",
+                        style: TextStyle(
+                          fontSize: 24,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Login Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[850],
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "Enter your credentials to securely access your\naccount and stay in control of your tokenized data",
+                        style: TextStyle(color: Colors.grey),
                       ),
-                    ),
-                    onPressed: () {
+                      const SizedBox(height: 32),
 
-                      final email = emailController.text.trim();
-                      final password = passController.text;
+                      TextField(
+                        controller: emailController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          labelText: "Email",
+                          labelStyle: const TextStyle(color: Colors.white),
+                          hintText: "Enter your email",
+                          hintStyle: const TextStyle(color: Colors.grey),
+                          filled: true,
+                          fillColor: Colors.grey[900],
+                          prefixIcon: const Icon(Icons.mail_outline, color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
 
-                      if (!Validators.isValidEmail(email)) {
+                      TextField(
+                        controller: passController,
+                        obscureText: _obscurePassword,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          labelText: "Password",
+                          labelStyle: const TextStyle(color: Colors.white),
+                          hintText: "Enter your password",
+                          hintStyle: const TextStyle(color: Colors.grey),
+                          filled: true,
+                          fillColor: Colors.grey[900],
+                          prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
 
-                        showCustomDialog(context: context, title: 'Invalid Email', message: 'Please eneter a valid email');
-                        return;
-                      }
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey[850],
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            final email = emailController.text.trim();
+                            final password = passController.text;
 
-                      if (password.isEmpty) {
-                        showCustomDialog(context: context, title: 'Empty Password', message: 'Password is required');
-                        return;
-                      }
+                            if (!Validators.isValidEmail(email)) {
+                              showCustomDialog(
+                                context: context,
+                                title: 'Invalid Email',
+                                message: 'Please enter a valid email',
+                              );
+                              return;
+                            }
 
-                      ref.read(authViewModelProvider.notifier).login(email, password);
-                    },
-                    child: const Text("Login", style: TextStyle(color: Colors.white)),
+                            if (password.isEmpty) {
+                              showCustomDialog(
+                                context: context,
+                                title: 'Empty Password',
+                                message: 'Password is required',
+                              );
+                              return;
+                            }
+
+                            ref.read(authViewModelProvider.notifier).login(email, password);
+                          },
+                          child: const Text("Login", style: TextStyle(color: Colors.white)),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            // TODO: Navigate to forgot password
+                          },
+                          child: const Text("Forget your password?", style: TextStyle(color: Colors.grey)),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-
-                Center(
-                  child: TextButton(
-                    onPressed: () {
-                      // TODO: Navigate to forgot password
-                    },
-                    child: const Text("Forget your password?", style: TextStyle(color: Colors.grey)),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
 
-        /// Show Loading Overlay if loading
-        if (authState.isLoading) const LoadingOverlay(message: 'Checking Credentials',),
+        if (authState.isLoading)
+          const LoadingOverlay(message: 'Checking Credentials'),
       ],
     );
   }
 }
-
-
-
