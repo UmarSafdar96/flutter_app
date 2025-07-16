@@ -18,14 +18,10 @@ class _UserInfoScreenState extends ConsumerState<UserInfoScreen> {
   void initState() {
     super.initState();
 
-    final userId = HiveManager.box.get("user_id");
-    if (userId != null) {
+    Future.microtask(() {
+      ref.read(userViewModelProvider.notifier).fetchUserProfile();
+    });
 
-      print("user id found"+userId);
-      Future.microtask(() {
-        ref.read(userViewModelProvider.notifier).fetchUserProfile(userId);
-      });
-    }
   }
 
   @override
@@ -88,6 +84,15 @@ class _UserInfoScreenState extends ConsumerState<UserInfoScreen> {
           },
         ),
       ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+
+            Future.microtask(() {
+              ref.read(userViewModelProvider.notifier).fetchUserProfile();
+            });
+          },
+          child: Icon(Icons.refresh),
+        )
     );
   }
 

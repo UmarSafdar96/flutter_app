@@ -17,7 +17,9 @@ class UserViewModel extends StateNotifier<AuthState> {
       : _api = api ?? UserApiService(),
         super(AuthState.initial());
 
-  Future<void> fetchUserProfile(String userId) async {
+  Future<void> fetchUserProfile() async {
+    final userId = HiveManager.box.get("user_id");
+
     print("🔄 Fetching user profile for userId: $userId");
 
     state = state.copyWith(isLoading: true, message: null, isSuccess: false);

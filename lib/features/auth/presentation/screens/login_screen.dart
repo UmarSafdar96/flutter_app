@@ -50,15 +50,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           }
         }
 
-        // Handle messages (e.g., success, error)
-        // if (next.message != null && next.message != previous?.message) {
-        //   // You might want to differentiate between error and info messages
-        //   showCustomDialog(
-        //     context: context,
-        //     title: "Info", // Adjust title based on message type
-        //     message: next.message!,
-        //   );
-        // }
       },
     );
 

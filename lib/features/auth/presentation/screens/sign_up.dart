@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/auth_state.dart';
 import '../../utils/custom_dialog.dart';
 import '../../utils/loading_overlay.dart';
+import '../../utils/validators.dart';
 import '../viewmodels/auth_viewmodel.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -189,6 +190,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       final email = emailController.text.trim();
                       final password = passwordController.text;
                       final confirmPassword = confirmPasswordController.text;
+
+                      if (!Validators.isValidEmail(email)) {
+
+                        showCustomDialog(context: context, title: 'Invalid Email', message: 'Please eneter a valid email');
+                        return;
+                      }
+
+                      if (password.isEmpty) {
+                        showCustomDialog(context: context, title: 'Empty Password', message: 'Password is required');
+                        return;
+                      }
 
                       if (password != confirmPassword) {
                         showCustomDialog(
