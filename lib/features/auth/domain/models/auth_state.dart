@@ -1,12 +1,10 @@
-// auth_state.dart
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 class AuthState {
   final bool isLoading;
   final String? message;
   final bool isSuccess;
   final bool sentEmail;
   final bool otpVerified;
+  final List<Map<String, String>> userList;
 
   const AuthState({
     this.isLoading = false,
@@ -14,6 +12,7 @@ class AuthState {
     this.isSuccess = false,
     this.sentEmail = false,
     this.otpVerified = false,
+    this.userList = const [],
   });
 
   AuthState copyWith({
@@ -21,13 +20,16 @@ class AuthState {
     String? message,
     bool? isSuccess,
     bool? sentEmail,
+    bool? otpVerified,
+    List<Map<String, String>>? userList,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
-      message: message,
+      message: message ?? this.message,
       isSuccess: isSuccess ?? this.isSuccess,
       sentEmail: sentEmail ?? this.sentEmail,
       otpVerified: otpVerified ?? this.otpVerified,
+      userList: userList ?? this.userList,
     );
   }
 

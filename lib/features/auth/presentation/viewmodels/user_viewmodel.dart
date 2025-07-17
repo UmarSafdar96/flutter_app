@@ -18,22 +18,19 @@ class UserViewModel extends StateNotifier<AuthState> {
       : _api = api ?? UserApiService(),
         super(AuthState.initial());
 
-  Future<List<Map<String, String>>> fetchUserProfile() async {
+  Future<void> fetchUserProfile() async {
     final userId = HiveManager.box.get("user_id");
-
     state = state.copyWith(isLoading: true, message: null, isSuccess: false);
 
     try {
       final response = await _api.getuser(UserId(userId: userId));
-
       final json = JSONHelper(response.data);
       final message = json.string("message") ?? "User profile fetch completed.";
 
       final coreData = json.nested("data").get("userCoreData");
 
       if (coreData is List && coreData.isNotEmpty) {
-        // Map each user entry to a Map<String, String>
-        final List<Map<String, String>> userList = coreData.map<Map<String, String>>((entry) {
+        final userList = coreData.map<Map<String, String>>((entry) {
           final userJson = JSONHelper(entry);
           return {
             "user_id": userJson.string("user_id") ?? "N/A",
@@ -47,40 +44,34 @@ class UserViewModel extends StateNotifier<AuthState> {
 
         state = state.copyWith(
           isLoading: false,
-          message: message,
           isSuccess: true,
+          message: message,
+          userList: userList,
         );
-
-        return userList;
       } else {
         state = state.copyWith(
           isLoading: false,
-          message: "User profile is empty.",
           isSuccess: false,
+          message: "User profile is empty.",
+          userList: [],
         );
-        return [];
       }
     } on DioException catch (e) {
-      final errorData = e.response?.data;
-      final message = errorData is Map<String, dynamic> && errorData.containsKey('message')
-          ? errorData['message']
-          : 'Failed to fetch user profile.';
-
+      final message = e.response?.data["message"] ?? "Failed to fetch user profile.";
       state = state.copyWith(
         isLoading: false,
-        message: message,
         isSuccess: false,
+        message: message,
+        userList: [],
       );
-
-      return [];
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        message: "An unexpected error occurred while fetching user profile.",
         isSuccess: false,
+        message: "An unexpected error occurred while fetching user profile.",
+        userList: [],
       );
-
-      return [];
     }
   }
+
 }

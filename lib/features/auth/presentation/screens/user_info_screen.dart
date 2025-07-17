@@ -11,18 +11,11 @@ class UserInfoScreen extends ConsumerStatefulWidget {
 }
 
 class _UserInfoScreenState extends ConsumerState<UserInfoScreen> {
-  List<Map<String, String>> userDataList = [];
-
   @override
   void initState() {
     super.initState();
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
-    final result = await ref.read(userViewModelProvider.notifier).fetchUserProfile();
-    setState(() {
-      userDataList = result;
+    Future.microtask(() {
+      ref.read(userViewModelProvider.notifier).fetchUserProfile();
     });
   }
 
@@ -47,11 +40,13 @@ class _UserInfoScreenState extends ConsumerState<UserInfoScreen> {
               return _shimmerList();
             }
 
-            if (state.isSuccess && userDataList.isNotEmpty) {
-              return ListView.builder(
-                itemCount: userDataList.length,
+            if (state.isSuccess && state.userList.isNotEmpty) {
+              return ListView.separated(
+                itemCount: state.userList.length,
+                separatorBuilder: (_, __) =>
+                const Divider(color: Colors.white24, height: 32),
                 itemBuilder: (_, index) {
-                  final user = userDataList[index];
+                  final user = state.userList[index];
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -61,7 +56,6 @@ class _UserInfoScreenState extends ConsumerState<UserInfoScreen> {
                       _infoCard("Phone", user["phone"] ?? "N/A"),
                       _infoCard("Wallet Address", user["wallet"] ?? "N/A"),
                       _infoCard("Created At", user["created_at"] ?? "N/A"),
-                      const Divider(color: Colors.white24, height: 32),
                     ],
                   );
                 },
@@ -78,7 +72,9 @@ class _UserInfoScreenState extends ConsumerState<UserInfoScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _loadUserData,
+        onPressed: () {
+          ref.read(userViewModelProvider.notifier).fetchUserProfile();
+        },
         child: const Icon(Icons.refresh),
       ),
     );
