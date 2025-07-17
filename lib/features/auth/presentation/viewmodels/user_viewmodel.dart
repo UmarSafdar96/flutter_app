@@ -1,11 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_app/features/auth/data/remote/user_api_service.dart';
 import 'package:flutter_app/features/auth/domain/models/auth_state.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_app/core/storage/hive_manager.dart';
 import 'package:flutter_app/features/auth/domain/models/user_id.dart';
+import '../../../../core/storage/hive_manager.dart';
 import '../../utils/json_helper.dart';
 
+// Provide the ViewModel using Riverpod
 final userViewModelProvider = StateNotifierProvider<UserViewModel, AuthState>(
       (ref) => UserViewModel(),
 );
@@ -17,17 +18,13 @@ class UserViewModel extends StateNotifier<AuthState> {
       : _api = api ?? UserApiService(),
         super(AuthState.initial());
 
-  Future<void> fetchUserProfile() async {
+  Future<List<Map<String, String>>> fetchUserProfile() async {
     final userId = HiveManager.box.get("user_id");
 
-    print("🔄 Fetching user profile for userId: $userId");
-
     state = state.copyWith(isLoading: true, message: null, isSuccess: false);
-    print("🚀 State set to loading...");
 
     try {
       final response = await _api.getuser(UserId(userId: userId));
-      print("✅ API call success, response: ${response.data}");
 
       final json = JSONHelper(response.data);
       final message = json.string("message") ?? "User profile fetch completed.";
@@ -35,31 +32,33 @@ class UserViewModel extends StateNotifier<AuthState> {
       final coreData = json.nested("data").get("userCoreData");
 
       if (coreData is List && coreData.isNotEmpty) {
-        final userJson = JSONHelper(coreData[0]);
-
-        // Save values to Hive
-        HiveManager.box.put("user_id", userJson.string("user_id"));
-        HiveManager.box.put("first_name", userJson.string("firstName"));
-        HiveManager.box.put("last_name", userJson.string("lastName"));
-        HiveManager.box.put("phone", userJson.string("phone"));
-        HiveManager.box.put("wallet", userJson.string("walletAddress"));
-        HiveManager.box.put("created_at", userJson.string("createdAt"));
-
-        print("📦 Saved user data to Hive");
+        // Map each user entry to a Map<String, String>
+        final List<Map<String, String>> userList = coreData.map<Map<String, String>>((entry) {
+          final userJson = JSONHelper(entry);
+          return {
+            "user_id": userJson.string("user_id") ?? "N/A",
+            "first_name": userJson.string("firstName") ?? "N/A",
+            "last_name": userJson.string("lastName") ?? "N/A",
+            "phone": userJson.string("phone") ?? "N/A",
+            "wallet": userJson.string("walletAddress") ?? "N/A",
+            "created_at": userJson.string("createdAt") ?? "N/A",
+          };
+        }).toList();
 
         state = state.copyWith(
           isLoading: false,
           message: message,
           isSuccess: true,
         );
-        print("✅ State updated: Success");
+
+        return userList;
       } else {
-        print("⚠️ No userCoreData found.");
         state = state.copyWith(
           isLoading: false,
           message: "User profile is empty.",
           isSuccess: false,
         );
+        return [];
       }
     } on DioException catch (e) {
       final errorData = e.response?.data;
@@ -67,20 +66,21 @@ class UserViewModel extends StateNotifier<AuthState> {
           ? errorData['message']
           : 'Failed to fetch user profile.';
 
-      print("❌ DioException: $message");
-
       state = state.copyWith(
         isLoading: false,
         message: message,
         isSuccess: false,
       );
-    } catch (e, st) {
-      print("❌ Unexpected error: $e");
+
+      return [];
+    } catch (e) {
       state = state.copyWith(
         isLoading: false,
         message: "An unexpected error occurred while fetching user profile.",
         isSuccess: false,
       );
+
+      return [];
     }
   }
 }

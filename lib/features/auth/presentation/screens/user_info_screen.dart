@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
-
-import '../../../../core/storage/hive_manager.dart';
 import '../viewmodels/user_viewmodel.dart';
-
 
 class UserInfoScreen extends ConsumerStatefulWidget {
   const UserInfoScreen({super.key});
@@ -14,14 +11,19 @@ class UserInfoScreen extends ConsumerStatefulWidget {
 }
 
 class _UserInfoScreenState extends ConsumerState<UserInfoScreen> {
+  List<Map<String, String>> userDataList = [];
+
   @override
   void initState() {
     super.initState();
+    _loadUserData();
+  }
 
-    Future.microtask(() {
-      ref.read(userViewModelProvider.notifier).fetchUserProfile();
+  Future<void> _loadUserData() async {
+    final result = await ref.read(userViewModelProvider.notifier).fetchUserProfile();
+    setState(() {
+      userDataList = result;
     });
-
   }
 
   @override
@@ -31,12 +33,12 @@ class _UserInfoScreenState extends ConsumerState<UserInfoScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-      backgroundColor: Colors.black,
-      elevation: 0,
-      title: const Text("User Info"),
-      foregroundColor: Colors.white,
-      leading: const BackButton(),
-    ),
+        backgroundColor: Colors.black,
+        elevation: 0,
+        title: const Text("User Info"),
+        foregroundColor: Colors.white,
+        leading: const BackButton(),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Builder(
@@ -45,35 +47,26 @@ class _UserInfoScreenState extends ConsumerState<UserInfoScreen> {
               return _shimmerList();
             }
 
-            if (state.isSuccess) {
-              // Display from Hive
-              final userId = HiveManager.box.get("user_id") ?? "N/A";
-              final firstName = HiveManager.box.get("first_name") ?? "N/A";
-              final lastName = HiveManager.box.get("last_name") ?? "N/A";
-              final phone = HiveManager.box.get("phone") ?? "N/A";
-              final wallet = HiveManager.box.get("wallet") ?? "N/A";
-              final createdAt = HiveManager.box.get("created_at") ?? "N/A";
-
-              return ListView(
-                children: [
-                  _infoCard("User ID", userId),
-                  _infoCard("First Name", firstName),
-                  _infoCard("Last Name", lastName),
-                  _infoCard("Phone", phone),
-                  _infoCard("Wallet Address", wallet),
-                  _infoCard("Created At", createdAt),
-                ],
+            if (state.isSuccess && userDataList.isNotEmpty) {
+              return ListView.builder(
+                itemCount: userDataList.length,
+                itemBuilder: (_, index) {
+                  final user = userDataList[index];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _infoCard("User ID", user["user_id"] ?? "N/A"),
+                      _infoCard("First Name", user["first_name"] ?? "N/A"),
+                      _infoCard("Last Name", user["last_name"] ?? "N/A"),
+                      _infoCard("Phone", user["phone"] ?? "N/A"),
+                      _infoCard("Wallet Address", user["wallet"] ?? "N/A"),
+                      _infoCard("Created At", user["created_at"] ?? "N/A"),
+                      const Divider(color: Colors.white24, height: 32),
+                    ],
+                  );
+                },
               );
             }
-
-// Always show error if not loading and not success
-            return Center(
-              child: Text(
-                state.message ?? "Failed to load user info",
-                style: const TextStyle(color: Colors.redAccent),
-              ),
-            );
-
 
             return Center(
               child: Text(
@@ -84,15 +77,10 @@ class _UserInfoScreenState extends ConsumerState<UserInfoScreen> {
           },
         ),
       ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-
-            Future.microtask(() {
-              ref.read(userViewModelProvider.notifier).fetchUserProfile();
-            });
-          },
-          child: Icon(Icons.refresh),
-        )
+      floatingActionButton: FloatingActionButton(
+        onPressed: _loadUserData,
+        child: const Icon(Icons.refresh),
+      ),
     );
   }
 

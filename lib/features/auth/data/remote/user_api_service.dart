@@ -12,3 +12,5 @@ class UserApiService {
     return _dio.post('/api/v2/dashboard/user_profile', data: id.toJson());
   }
 }
+
+
