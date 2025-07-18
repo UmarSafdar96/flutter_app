@@ -1,5 +1,8 @@
+// lib/ui/battery_page.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
+import '../service/battery_service.dart';
+import '../service/biometric_service.dart';
 
 class BatteryPage extends StatefulWidget {
   const BatteryPage({super.key});
@@ -9,28 +12,33 @@ class BatteryPage extends StatefulWidget {
 }
 
 class _BatteryPageState extends State<BatteryPage> {
-  static const platform = MethodChannel('battery/info');
+  final biometricService = BiometricService();
+  final batteryService = BatteryService();
 
   String _batteryLevel = 'Unknown battery level.';
 
-  Future<void> _getBatteryLevel() async {
-    String batteryLevel;
-    try {
-      final int result = await platform.invokeMethod('getBatteryLevel');
-      batteryLevel = 'Battery level: $result%';
-    } on PlatformException catch (e) {
-      batteryLevel = 'Failed to get battery level: ${e.message}';
+  Future<void> _loadBatteryLevel() async {
+    final isAuthenticated = await biometricService.authenticate();
+
+    if (!isAuthenticated) {
+      setState(() {
+        _batteryLevel = 'Authentication failed.';
+      });
+      return;
     }
 
+    final battery = await batteryService.getBatteryLevel();
     setState(() {
-      _batteryLevel = batteryLevel;
+      _batteryLevel = battery != null
+          ? 'Battery level: $battery%'
+          : 'Failed to get battery level.';
     });
   }
 
   @override
   void initState() {
     super.initState();
-    _getBatteryLevel();
+    _loadBatteryLevel();
   }
 
   @override
@@ -44,7 +52,7 @@ class _BatteryPageState extends State<BatteryPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _getBatteryLevel,
+        onPressed: _loadBatteryLevel,
         child: const Icon(Icons.refresh),
       ),
     );
