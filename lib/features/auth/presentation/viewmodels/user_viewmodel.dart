@@ -5,21 +5,35 @@ import 'package:flutter_app/features/auth/domain/models/auth_state.dart';
 import 'package:flutter_app/features/auth/domain/models/user_id.dart';
 import '../../../../core/storage/hive_manager.dart';
 import '../../utils/json_helper.dart';
+import '../../utils/secure_encryption.dart';
+
+
+final encryptionServiceProvider = Provider<SecureEncryptionService>((ref) {
+  return SecureEncryptionService();
+});
 
 // Provide the ViewModel using Riverpod
+// Modify the userViewModelProvider to inject SecureEncryptionService
 final userViewModelProvider = StateNotifierProvider<UserViewModel, AuthState>(
-      (ref) => UserViewModel(),
+      (ref) {
+    final encryptionService = ref.read(encryptionServiceProvider);
+    return UserViewModel(encryptionService: encryptionService);
+  },
 );
 
 class UserViewModel extends StateNotifier<AuthState> {
   final UserApiService _api;
+  final SecureEncryptionService _encryptionService; // Add encryption service
 
-  UserViewModel({UserApiService? api})
+
+  UserViewModel({UserApiService? api, required SecureEncryptionService encryptionService})
       : _api = api ?? UserApiService(),
+        _encryptionService = encryptionService, // Initialize encryption service
         super(AuthState.initial());
 
   Future<void> fetchUserProfile() async {
     final userId = HiveManager.box.get("user_id");
+
     state = state.copyWith(isLoading: true, message: null, isSuccess: false);
 
     try {
@@ -74,4 +88,16 @@ class UserViewModel extends StateNotifier<AuthState> {
     }
   }
 
+  // Example of using encryption for a hypothetical save operation
+  Future<void> saveSensitiveData(String data) async {
+    try {
+      final encryptedData = await _encryptionService.encrypt(data);
+      // Now you can send 'encryptedData' to your API or save it securely
+      print('Encrypted data: $encryptedData');
+      // ... call API to save encrypted data
+    } catch (e) {
+      print('Error encrypting data: $e');
+    }
+  }
 }
+
